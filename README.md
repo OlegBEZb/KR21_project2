@@ -1,5 +1,17 @@
 # Useful Pointers for Assignment 2 of KR21
 
+# TODO-list
+
+1. Everyone have to read the code snippets given
+2. Everyone have to share their github accounts to Oleg
+3. Everyone reads the description on canvas
+4. Smb to create an overleaf
+5. Discuss the task to be solved (7th of December)
+6. .BIFXML encoding format + to reflect it in the report
+7. Algorithms from task 1(d-sep, ordering, etc) 15th of December (exam is prior)
+   1. Each algorithm is described in parallel in the report
+8. Report before the 22nd 12:00
+
 ## BIFXML file format
 The BIFXML file format is meant to provide an easy means of exchanging Bayesian networks. It works with standard XML
 tags. The detailed description of the format can be found at 
