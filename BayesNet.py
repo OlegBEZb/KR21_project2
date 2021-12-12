@@ -114,6 +114,95 @@ class BayesNet:
 
         return cpts
 
+    @property
+    def structure_unidirected(self):
+        return self.structure.to_undirected()
+
+    def find_observed_ancestors(self, observed):
+        """
+        Traverse the graph, find all nodes that have observed descendants.
+        Args:
+            observed: a set of strings, names of the observed nodes.
+        Returns:
+            a set of strings for the nodes' names for all nodes
+            with observed descendants.
+        """
+        nodes_to_visit = set(observed)  ## nodes to visit
+        observed_ancestors = set()  ## observed nodes and their ancestors
+
+        ## repeatedly visit the nodes' parents
+        while len(nodes_to_visit) > 0:
+            next_node = nodes_to_visit.pop()
+            if next_node not in observed_ancestors:
+                nodes_to_visit = nodes_to_visit | set(pred for pred in self.structure.predecessors(next_node))
+            observed_ancestors = observed_ancestors | set([next_node])
+
+        return observed_ancestors
+
+    # TODO: extract reachable
+    # TODO: wrap to make each parameter a set
+    def d_separated(self, start, end, observed):
+        """
+        Check whether start and end are d-separated given observed.
+        This algorithm mainly follows the "Reachable" procedure in
+        Koller and Friedman (2009),
+        "Probabilistic Graphical Models: Principles and Techniques", page 75.
+        Args:
+            start: a string, name of the first query node
+            end: a string, name of the second query node
+            observed: a list of strings, names of the observed nodes.
+        """
+
+        ## all nodes having observed descendants.
+        obs_anc = self.find_observed_ancestors(observed)
+
+        ## Try all active paths starting from the node "start".
+        ## If any of the paths reaches the node "end",
+        ## then "start" and "end" are *not* d-separated.
+        ## In order to deal with v-structures,
+        ## we need to keep track of the direction of traversal:
+        ## "up" if traveled from child to parent, and "down" otherwise.
+        nodes_to_visit = [(start, "up")]
+        visited = set()  ## keep track of visited nodes to avoid cyclic paths
+        reachable_from_start = set()
+
+        while len(nodes_to_visit) > 0:
+            (nname, direction) = nodes_to_visit.pop()
+            print('considering node:', (nname, direction))
+
+            ## skip visited nodes
+            if (nname, direction) not in visited:
+                # ## if reaches the node "end", then it is not d-separated
+                # if nname not in observed and nname == end:
+                #     return False
+                if nname not in observed:
+                    reachable_from_start = reachable_from_start | set([nname])
+
+                visited.add((nname, direction))
+
+                ## if traversing from children, then it won't be a v-structure
+                ## the path is active as long as the current node is unobserved
+                if direction == "up" and nname not in observed:
+                    for parent in self.structure.predecessors(nname):
+                        nodes_to_visit.append((parent, "up"))
+                    for child in self.structure.successors(nname):
+                        nodes_to_visit.append((child, "down"))
+
+                ## if traversing from parents, then need to check v-structure
+                elif direction == "down":
+                    ## path to children is always active
+                    if nname not in observed:
+                        for child in self.structure.successors(nname):
+                            nodes_to_visit.append((child, "down"))
+                    ## path to parent forms a v-structure
+                    if nname in obs_anc:
+                        for parent in self.structure.predecessors(nname):
+                            nodes_to_visit.append((parent, "up"))
+        if end in reachable_from_start:
+            return True
+        else:
+            return False
+
     def get_interaction_graph(self):
         """
         Returns a networkx.Graph as interaction graph of the current BN.
