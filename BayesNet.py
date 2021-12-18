@@ -67,10 +67,10 @@ class BayesNet:
             columns.append(key)
             columns.append('p')
             cpts[key] = pd.DataFrame(cpt, columns=columns)
-        
+
         # load vars
         variables = bif_reader.get_variables()
-        
+
         # load edges
         edges = bif_reader.get_edges()
 
@@ -216,8 +216,8 @@ class BayesNet:
         # connect all variables with an edge which are mentioned in a CPT together
         for var in self.get_all_variables():
             involved_vars = list(self.get_cpt(var).columns)[:-1]
-            for i in range(len(involved_vars)-1):
-                for j in range(i+1, len(involved_vars)):
+            for i in range(len(involved_vars) - 1):
+                for j in range(i + 1, len(involved_vars)):
                     if not int_graph.has_edge(involved_vars[i], involved_vars[j]):
                         int_graph.add_edge(involved_vars[i], involved_vars[j])
         return int_graph
@@ -227,10 +227,12 @@ class BayesNet:
         """
         Get all the entries of a CPT which are compatible with the instantiation.
 
-        :param instantiation: a series of assignments as tuples. E.g.: pd.Series(("A", True), ("B", False))
+        :param instantiation: a series of assignments as tuples. E.g.: pd.Series({"A": True, "B": False})
         :param cpt: cpt to be filtered
         :return: table with compatible instantiations and their probability value
         """
+        if instantiation.empty:
+            return cpt
         var_names = instantiation.index.values
         var_names = [v for v in var_names if v in cpt.columns]  # get rid of excess variables names
         compat_indices = cpt[var_names] == instantiation[var_names].values
@@ -280,8 +282,8 @@ class BayesNet:
         return result.drop(['p_x', 'p_y'], axis=1)
 
     @staticmethod
-    def VE_PR1(bn, Q):
-        S = bn.get_all_cpts()
+    def variable_elimination(bn, Q, evidence: pd.Series = pd.Series()):
+        S = {k: bn.get_compatible_instantiations_table(evidence, v) for k, v in bn.get_all_cpts().items()}
         for var in [v for v in bn.get_all_variables() if v not in Q]:
             print('processing', var)
             f_k = {k: df for k, df in S.items() if var in df}
