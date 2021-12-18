@@ -6,6 +6,7 @@ import math
 import itertools
 import pandas as pd
 from copy import deepcopy
+from functools import reduce
 
 
 class BayesNet:
@@ -251,7 +252,7 @@ class BayesNet:
         Creates and returns a new factor in which all probabilities which are incompatible with the instantiation
         passed to the method to 0.
 
-        :param instantiation: a series of assignments as tuples. E.g.: pd.Series({"A", True}, {"B", False})
+        :param instantiation: a series of assignments as tuples. E.g.: pd.Series({"A": True}, {"B": False})
         :param cpt: cpt to be reduced
         :return: cpt with their original probability value and zero probability for incompatible instantiations
         """
@@ -260,11 +261,42 @@ class BayesNet:
         if len(var_names) > 0:  # only reduce the factor if the evidence appears in it
             new_cpt = deepcopy(cpt)
             incompat_indices = cpt[var_names] != instantiation[var_names].values
-            incompat_indices = [any(x[1]) for x in incompat_indices.iterrows()]
+            incompat_indices = [any(x[1]) for x in incompat_indices.iterrows()]  # check any non-negative values
             new_cpt.loc[incompat_indices, 'p'] = 0.0
             return new_cpt
         else:
             return cpt
+
+    @staticmethod
+    def sum_out(factor, variables):
+        Y = [X for X in factor.columns if X not in variables and X != 'p']
+        return factor.groupby(Y)['p'].sum().to_frame().reset_index()
+
+    @staticmethod
+    def multiply_factors(f1, f2):
+        on = [c for c in f1.columns if c in f2.columns and c != 'p']
+        result = pd.merge(f1, f2, on=on, how='outer')
+        result['p'] = result['p_x'] * result['p_y']
+        return result.drop(['p_x', 'p_y'], axis=1)
+
+    @staticmethod
+    def VE_PR1(bn, Q):
+        S = bn.get_all_cpts()
+        for var in [v for v in bn.get_all_variables() if v not in Q]:
+            print('processing', var)
+            f_k = {k: df for k, df in S.items() if var in df}
+            [display(df) for k, df in f_k.items()]
+            f = reduce(bn.multiply_factors, list(f_k.values()))
+            print('f')
+            display(f)
+            f_i = bn.sum_out(f, set([var]))
+            print('f_i')
+            display(f_i)
+            for k in f_k:
+                del S[k]
+            S[var + '*'] = f_i
+            print('S\n', S)
+        return reduce(bn.multiply_factors, list(S.values()))
 
     def draw_structure(self) -> None:
         """
