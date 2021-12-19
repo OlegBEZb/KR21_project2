@@ -7,6 +7,8 @@ import itertools
 import pandas as pd
 from copy import deepcopy
 from functools import reduce
+from itertools import combinations
+from random import shuffle
 
 
 class BayesNet:
@@ -269,6 +271,60 @@ class BayesNet:
         else:
             return cpt
 
+    def min_degree_order(self):
+        interaction_graph = self.get_interaction_graph()
+        ordered_vars = []
+        for i in range(len(interaction_graph.nodes)):
+            self.draw_graph(interaction_graph, i)
+            neighbors_dict = {v: [n for n in interaction_graph.neighbors(v)] for v in interaction_graph.nodes}
+            print('neighbors_dict\n', neighbors_dict)
+
+            var_to_elim = min(neighbors_dict, key=lambda k: len(neighbors_dict[k]))
+            print('var_to_elim:', var_to_elim)
+            ordered_vars.append(var_to_elim)
+
+            neighbors = neighbors_dict[var_to_elim]
+            if len(neighbors) > 1:
+                edges = [c for c in combinations(neighbors, 2)]
+                for edge in edges:
+                    if not interaction_graph.has_edge(edge[0], edge[1]):
+                        interaction_graph.add_edge(edge[0], edge[1])
+
+            interaction_graph.remove_node(var_to_elim)
+
+        return ordered_vars
+
+    def min_fill_order(self):
+        interaction_graph = self.get_interaction_graph()
+        ordered_vars = []
+        for i in range(len(interaction_graph.nodes)):
+            self.draw_graph(interaction_graph, i)
+            neighbors_dict = {v: [n for n in interaction_graph.neighbors(v)] for v in interaction_graph.nodes}
+            print('neighbors_dict\n', neighbors_dict)
+
+            edges_to_add = {key: [] for key in neighbors_dict.keys()}
+            for var, neighbors in neighbors_dict.items():
+                # print('var, neighbors', var, neighbors)
+                if len(neighbors) > 1:
+                    edges = [c for c in combinations(neighbors, 2)]
+                    # print('edges to consider', edges)
+                    for edge in edges:
+                        if not interaction_graph.has_edge(edge[0], edge[1]):
+                            # print(f'adding {edge} to {var}')
+                            edges_to_add[var].append(edge)
+            print('neighbors_to_connect\n', edges_to_add)
+
+            var_to_elim = min(neighbors_dict, key=lambda k: len(edges_to_add[k]))
+            print('var_to_elim:', var_to_elim)
+            ordered_vars.append(var_to_elim)
+
+            for edge in edges_to_add[var_to_elim]:
+                interaction_graph.add_edge(edge[0], edge[1])
+
+            interaction_graph.remove_node(var_to_elim)
+
+        return ordered_vars
+
     @staticmethod
     def sum_out(factor, variables):
         Y = [X for X in factor.columns if X not in variables and X != 'p']
@@ -285,17 +341,25 @@ class BayesNet:
     def normalize_col(col: pd.Series):
         return col / col.sum()
 
-    @staticmethod
-    def variable_elimination(bn, Q, evidence: pd.Series = pd.Series()):
-        S = {k: bn.get_compatible_instantiations_table(evidence, v) for k, v in bn.get_all_cpts().items()}
-        for var in [v for v in bn.get_all_variables() if v not in Q]:
+    def variable_elimination(self, Q, evidence: pd.Series = pd.Series(), order='min_degree_order'):
+        if order == 'min_degree_order':
+            ordered_variables = self.min_degree_order()
+        elif order == 'min_fill_order':
+            ordered_variables = self.min_fill_order()
+        elif order == 'random':
+            ordered_variables = self.get_all_variables()
+            shuffle(ordered_variables)
+        else:
+            raise valueError("order should be 'random', 'min_degree_order', or 'min_fill_order'")
+        S = {k: self.get_compatible_instantiations_table(evidence, v) for k, v in self.get_all_cpts().items()}
+        for var in [v for v in ordered_variables if v not in Q]:
             print('processing', var)
             f_k = {k: df for k, df in S.items() if var in df}
             [display(df) for k, df in f_k.items()]
-            f = reduce(bn.multiply_factors, list(f_k.values()))
+            f = reduce(self.multiply_factors, list(f_k.values()))
             print('f')
             display(f)
-            f_i = bn.sum_out(f, set([var]))
+            f_i = self.sum_out(f, set([var]))
             print('f_i')
             display(f_i)
             for k in f_k:
@@ -303,8 +367,8 @@ class BayesNet:
             S[var + '*'] = f_i
             print('S\n', S)
 
-        result = reduce(bn.multiply_factors, list(S.values()))
-        result['p'] = bn.normalize_col(result['p'])
+        result = reduce(self.multiply_factors, list(S.values()))
+        result['p'] = self.normalize_col(result['p'])
         return result
 
     def draw_structure(self) -> None:
@@ -313,6 +377,16 @@ class BayesNet:
         """
         nx.draw(self.structure, with_labels=True, node_size=3000)
         plt.show()
+
+    @staticmethod
+    def draw_graph(G, n):
+        plt.figure(n)
+        pos = nx.spring_layout(G)
+        nx.draw_networkx_nodes(G, pos, node_size=500)
+        nx.draw_networkx_labels(G, pos)
+
+        black_edges = [edge for edge in G.edges()]
+        nx.draw_networkx_edges(G, pos, edgelist=black_edges, arrows=False)
 
     # BASIC HOUSEKEEPING METHODS ---------------------------------------------------------------------------------------
 
