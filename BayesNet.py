@@ -282,6 +282,10 @@ class BayesNet:
         return result.drop(['p_x', 'p_y'], axis=1)
 
     @staticmethod
+    def normalize_col(col: pd.Series):
+        return col / col.sum()
+
+    @staticmethod
     def variable_elimination(bn, Q, evidence: pd.Series = pd.Series()):
         S = {k: bn.get_compatible_instantiations_table(evidence, v) for k, v in bn.get_all_cpts().items()}
         for var in [v for v in bn.get_all_variables() if v not in Q]:
@@ -298,7 +302,10 @@ class BayesNet:
                 del S[k]
             S[var + '*'] = f_i
             print('S\n', S)
-        return reduce(bn.multiply_factors, list(S.values()))
+
+        result = reduce(bn.multiply_factors, list(S.values()))
+        result['p'] = bn.normalize_col(result['p'])
+        return result
 
     def draw_structure(self) -> None:
         """
