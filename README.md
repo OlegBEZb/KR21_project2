@@ -3,19 +3,31 @@
 # TODO-list
 
 2. Introduction (everyone)
-   1. What is inference (everyone)
-3. Literature review (everyone)
-4. .BIFXML encoding format + visual explanation + example (Dian)
-5. Task 1 description (call on Friday about 17-20 and hard deadline on Sunday 12.12)
-   1. d-sep (Oleg)
+   1. Intro to BN
+      1. Parts of the BN (inference/ve(sum_out, multiplication))
+   2. Literature review (everyone)
+   3. Hypotheses regarding task 3
+   4. In section 4 we will consider the use-case of "passing the exam"
+3. .BIFXML encoding format + visual explanation + example (Dian)
+4. Task 1 description (call on Friday about 17-20 and hard deadline on Sunday 12.12)
+   1. d-sep (Muska)
    2. ordering (Muska)
    3. pruning (Xiaoyang)
-   4. marginal distrib (Oleg)
+   4. marginal distrib (Dian)
    5. MAP and MEP (Muska and Xiaoyang)
-6. Generate triples for dsep testing A and B are ind given C
-7. Discuss the task to be solved (10th of December)
-8. Algorithms from task 1(d-sep, ordering, etc) 15th of December (exam is prior)
-   1. Each algorithm is described in parallel in the report
+5. Create algo-proving tests (Oleg)
+6. Generate graphs of different sizes in terms of variable nums
+7. Experiments (find the experiment snippets) (Oleg)
+   1. Heuristics
+   2. Performance
+8. Task 3 USE-CASE
+   1. Find a large problem formed as a BN with 10+ nodes
+   2. Adapt the BN to sth else like the problem defined by us
+   3. Encode it to BIFXML
+   4. Try the BN with different interesting queries
+      1. a-priory prob
+      2. posterior prob
+      3. MAP and MEP
 9. Report before the 22nd 12:00
 
 ## BIFXML file format
