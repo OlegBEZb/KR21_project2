@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Set
 import networkx as nx
 import matplotlib.pyplot as plt
 from pgmpy.readwrite import XMLBIFReader
@@ -13,9 +13,10 @@ from random import shuffle
 
 class BayesNet:
 
-    def __init__(self) -> None:
+    def __init__(self, verbose=0) -> None:
         # initialize graph structure
         self.structure = nx.DiGraph()
+        self.verbose = verbose
 
     # LOADING FUNCTIONS ------------------------------------------------------------------------------------------------
     def create_bn(self, variables: List[str], edges: List[Tuple[str, str]], cpts: Dict[str, pd.DataFrame]) -> None:
@@ -88,6 +89,14 @@ class BayesNet:
         """
         return [c for c in self.structure.successors(variable)]
 
+    def get_parents(self, variable: str) -> List[str]:
+        """
+        Returns the parents of the variable in the graph.
+        :param variable: Variable to get the parents for
+        :return: List of parents
+        """
+        return [c for c in self.structure.predecessors(variable)]
+
     def get_cpt(self, variable: str) -> pd.DataFrame:
         """
         Returns the conditional probability table of a variable in the BN.
@@ -137,7 +146,7 @@ class BayesNet:
         while len(nodes_to_visit) > 0:
             next_node = nodes_to_visit.pop()
             if next_node not in observed_ancestors:
-                nodes_to_visit = nodes_to_visit | set(pred for pred in self.structure.predecessors(next_node))
+                nodes_to_visit = nodes_to_visit | set(pred for pred in self.get_parents(next_node))
             observed_ancestors = observed_ancestors | set([next_node])
 
         return observed_ancestors
@@ -275,12 +284,15 @@ class BayesNet:
         interaction_graph = self.get_interaction_graph()
         ordered_vars = []
         for i in range(len(interaction_graph.nodes)):
-            self.draw_graph(interaction_graph, i)
+            if self.verbose > 3:
+                self.draw_graph(interaction_graph, i)
             neighbors_dict = {v: [n for n in interaction_graph.neighbors(v)] for v in interaction_graph.nodes}
-            print('neighbors_dict\n', neighbors_dict)
+            if self.verbose > 2:
+                print('neighbors_dict\n', neighbors_dict)
 
             var_to_elim = min(neighbors_dict, key=lambda k: len(neighbors_dict[k]))
-            print('var_to_elim:', var_to_elim)
+            if self.verbose > 2:
+                print('var_to_elim:', var_to_elim)
             ordered_vars.append(var_to_elim)
 
             neighbors = neighbors_dict[var_to_elim]
@@ -298,9 +310,11 @@ class BayesNet:
         interaction_graph = self.get_interaction_graph()
         ordered_vars = []
         for i in range(len(interaction_graph.nodes)):
-            self.draw_graph(interaction_graph, i)
+            if self.verbose > 3:
+                self.draw_graph(interaction_graph, i)
             neighbors_dict = {v: [n for n in interaction_graph.neighbors(v)] for v in interaction_graph.nodes}
-            print('neighbors_dict\n', neighbors_dict)
+            if self.verbose > 2:
+                print('neighbors_dict\n', neighbors_dict)
 
             edges_to_add = {key: [] for key in neighbors_dict.keys()}
             for var, neighbors in neighbors_dict.items():
@@ -312,10 +326,12 @@ class BayesNet:
                         if not interaction_graph.has_edge(edge[0], edge[1]):
                             # print(f'adding {edge} to {var}')
                             edges_to_add[var].append(edge)
-            print('neighbors_to_connect\n', edges_to_add)
+            if self.verbose > 2:
+                print('neighbors_to_connect\n', edges_to_add)
 
             var_to_elim = min(neighbors_dict, key=lambda k: len(edges_to_add[k]))
-            print('var_to_elim:', var_to_elim)
+            if self.verbose > 2:
+                print('var_to_elim:', var_to_elim)
             ordered_vars.append(var_to_elim)
 
             for edge in edges_to_add[var_to_elim]:
@@ -342,6 +358,33 @@ class BayesNet:
         return col / col.sum()
 
     def variable_elimination(self, Q, evidence: pd.Series = pd.Series(), order='min_degree_order'):
+        ordered_variables = self.get_ordered_variables(order)
+        S = {k: self.get_compatible_instantiations_table(evidence, v) for k, v in self.get_all_cpts().items()}
+        for var in [v for v in ordered_variables if v not in Q]:
+            if self.verbose > 2:
+                print('processing', var)
+            f_k = {k: df for k, df in S.items() if var in df}
+            if self.verbose > 2:
+                [display(df) for k, df in f_k.items()]
+            f = reduce(self.multiply_factors, list(f_k.values()))
+            if self.verbose > 2:
+                print('f')
+                display(f)
+            f_i = self.sum_out(f, set([var]))
+            if self.verbose > 2:
+                print('f_i')
+                display(f_i)
+            for k in f_k:
+                del S[k]
+            S[var + '*'] = f_i
+            if self.verbose > 2:
+                print('S\n', S)
+
+        result = reduce(self.multiply_factors, list(S.values()))
+        result['p'] = self.normalize_col(result['p'])
+        return result
+
+    def get_ordered_variables(self, order):
         if order == 'min_degree_order':
             ordered_variables = self.min_degree_order()
         elif order == 'min_fill_order':
@@ -351,9 +394,51 @@ class BayesNet:
             shuffle(ordered_variables)
         else:
             raise valueError("order should be 'random', 'min_degree_order', or 'min_fill_order'")
+        return ordered_variables
+
+    def prune_nodes(self, Q: Set[int], evidence: Set[int]):
+        if self.verbose:
+            print("Pruning nodes")
+        self.draw_graph(self.structure, -1)
+        for i, var in enumerate(Q | evidence):
+            if self.verbose > 2:
+                print(f"Deleting {var} from graph")
+            self.del_var(var)
+            self.draw_graph(self.structure, i)
+
+    def prune_edges(self, evidence: pd.Series):
+        if self.verbose:
+            print("Pruning edges")
+        self.draw_graph(self.structure, -2)
+        for i, evidence_var in enumerate([idx for idx in evidence.index if idx in self.get_all_variables()]):
+            if self.verbose > 2:
+                print(f'considering {evidence_var} and its children')
+            for j, child in enumerate(self.get_children(evidence_var)):
+                print(f"deleting {evidence_var}->{child}")
+                self.del_edge((evidence_var, child))
+                if self.verbose > 2:
+                    print('cpt before')
+                    display(self.get_cpt(child))
+                self.update_cpt(child, self.reduce_factor(instantiation=evidence[evidence.index == evidence_var],
+                                                          cpt=self.get_cpt(child)))
+                if self.verbose > 2:
+                    print('cpt after')
+                    display(self.get_cpt(child))
+                    self.draw_graph(self.structure, (i + 1) * 100 + j)
+
+    def prune_network(self, Q: Set[int], evidence: pd.Series):
+        self.prune_nodes(Q=Q, evidence=set(evidence.index))
+        self.prune_edges(evidence=evidence)
+
+    def ve_mpe(self, evidence: pd.Series = pd.Series(), order='min_degree_order'):
+        self.prune_edges(evidence=evidence)
+
+        ordered_variables = self.get_ordered_variables(order)
         S = {k: self.get_compatible_instantiations_table(evidence, v) for k, v in self.get_all_cpts().items()}
-        for var in [v for v in ordered_variables if v not in Q]:
-            print('processing', var)
+
+        for var in ordered_variables:
+            if self.verbose > 2:
+                print('processing', var)
             f_k = {k: df for k, df in S.items() if var in df}
             [display(df) for k, df in f_k.items()]
             f = reduce(self.multiply_factors, list(f_k.values()))
