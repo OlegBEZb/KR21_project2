@@ -25,77 +25,77 @@
 	<NAME>Beef</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (73, 165)</PROPERTY>
+	<PROPERTY>position = (60，200)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Lamb</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (190, 69)</PROPERTY>
+	<PROPERTY>position = (120，200)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Vegetable</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (155, 165)</PROPERTY>
+	<PROPERTY>position = (180，200)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Iskender</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (154, 241)</PROPERTY>
+	<PROPERTY>position = (10,120)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Döner-Kebab</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (112, 69)</PROPERTY>
+	<PROPERTY>position = (60,120)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Shoarma</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (112, 69)</PROPERTY>
+	<PROPERTY>position = (120,120)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Adana</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (112, 69)</PROPERTY>
+	<PROPERTY>position = (180,120)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Salad</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (112, 69)</PROPERTY>
+	<PROPERTY>position = (240,120)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Schotel</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (112, 69)</PROPERTY>
+	<PROPERTY>position = (60,40)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Kapsalon</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (112, 69)</PROPERTY>
+	<PROPERTY>position = (120,40)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Dürüm</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (112, 69)</PROPERTY>
+	<PROPERTY>position = (180,40)</PROPERTY>
 </VARIABLE>
 
 
@@ -161,7 +161,7 @@
 	<FOR>Kapsalon</FOR>
 	<GIVEN>Döner-Kebab</GIVEN>
 	<GIVEN>Shoarma</GIVEN>
-	<TABLE>0.001 0.009 0.009 0.081 0.009 0.081 0.081 0.081 0.729 </TABLE>
+	<TABLE>0 0 0 0 0.02 0.018 0.008 0.72 </TABLE>
 </DEFINITION>
 
 <DEFINITION>
