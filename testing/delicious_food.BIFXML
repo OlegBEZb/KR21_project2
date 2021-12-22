@@ -25,77 +25,66 @@
 	<NAME>Beef</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (60，300)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Lamb</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (160，300)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Vegetable</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (260，300)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Iskender</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (30,180)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
-	<NAME>Döner-Kebab</NAME>
+	<NAME>Doner-Kebab</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (110,180)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Shoarma</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (190,180)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Adana</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (270,180)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Salad</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (350,180)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Schotel</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (60,60)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
 	<NAME>Kapsalon</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (160,60)</PROPERTY>
 </VARIABLE>
 
 <VARIABLE TYPE="nature">
-	<NAME>Dürüm</NAME>
+	<NAME>Durum</NAME>
 	<OUTCOME>true</OUTCOME>
 	<OUTCOME>false</OUTCOME>
-	<PROPERTY>position = (260,60)</PROPERTY>
 </VARIABLE>
 
 
@@ -130,7 +119,7 @@
 </DEFINITION>
 
 <DEFINITION>
-	<FOR>Döner-Kebab</FOR>
+	<FOR>Doner-Kebab</FOR>
 	<GIVEN>Beef</GIVEN>
 	<GIVEN>Lamb</GIVEN>
 	<TABLE>0.95 0.05 0.1 0.9 0.15 0.85 0.08 0.92 </TABLE>
@@ -151,15 +140,15 @@
 </DEFINITION>
 
 <DEFINITION>
-	<FOR>Dürüm</FOR>
-	<GIVEN>Döner-Kebab</GIVEN>
+	<FOR>Durum</FOR>
+	<GIVEN>Doner-Kebab</GIVEN>
 	<GIVEN>Shoarma</GIVEN>
 	<TABLE>0.96 0.04 0.06 0.94 0.15 0.85 0.1 0.9 </TABLE>
 </DEFINITION>
 
 <DEFINITION>
 	<FOR>Kapsalon</FOR>
-	<GIVEN>Döner-Kebab</GIVEN>
+	<GIVEN>Doner-Kebab</GIVEN>
 	<GIVEN>Shoarma</GIVEN>
 	<TABLE>0.9 0.1 0.4 0.6 0.55 0.45 0.5 0.5 </TABLE>
 </DEFINITION>
@@ -173,3 +162,4 @@
 
 
 </NETWORK>
+</BIF>

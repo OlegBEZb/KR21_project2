@@ -399,7 +399,8 @@ class BayesNet:
     def prune_nodes(self, Q: Set[int], evidence: Set[int]):
         if self.verbose:
             print("Pruning nodes")
-        self.draw_graph(self.structure, -1)
+        if self.verbose > 2:
+            self.draw_graph(self.structure, -1)
         for i, var in enumerate(Q | evidence):
             if self.verbose > 2:
                 print(f"Deleting {var} from graph")
@@ -409,12 +410,14 @@ class BayesNet:
     def prune_edges(self, evidence: pd.Series):
         if self.verbose:
             print("Pruning edges")
-        self.draw_graph(self.structure, -2)
+        if self.verbose > 2:
+            self.draw_graph(self.structure, -2)
         for i, evidence_var in enumerate([idx for idx in evidence.index if idx in self.get_all_variables()]):
             if self.verbose > 2:
                 print(f'considering {evidence_var} and its children')
             for j, child in enumerate(self.get_children(evidence_var)):
-                print(f"deleting {evidence_var}->{child}")
+                if self.verbose > 1:
+                    print(f"deleting {evidence_var}->{child}")
                 self.del_edge((evidence_var, child))
                 if self.verbose > 2:
                     print('cpt before')
@@ -439,18 +442,64 @@ class BayesNet:
         for var in ordered_variables:
             if self.verbose > 2:
                 print('processing', var)
+
             f_k = {k: df for k, df in S.items() if var in df}
-            [display(df) for k, df in f_k.items()]
+            if self.verbose > 2:
+                [display(df) for k, df in f_k.items()]
             f = reduce(self.multiply_factors, list(f_k.values()))
-            print('f')
-            display(f)
-            f_i = self.sum_out(f, set([var]))
-            print('f_i')
-            display(f_i)
+            if self.verbose > 2:
+                print('f')
+                display(f)
+            f_i = f.sort_values('p', ascending=False).drop_duplicates([c for c in f.columns if c not in ['p', var]])#self.sum_out(f, set([var]))
+            if self.verbose > 2:
+                print('f_i')
+                display(f_i)
             for k in f_k:
                 del S[k]
             S[var + '*'] = f_i
-            print('S\n', S)
+            if self.verbose > 2:
+                print('S\n', S)
+
+        result = reduce(self.multiply_factors, list(S.values()))
+        result['p'] = self.normalize_col(result['p'])
+        return result
+
+    def ve_map(self, M: Set[str], evidence: pd.Series = pd.Series(), order='min_degree_order'):
+        assert not(M & set(evidence.index)), 'should not intersect'
+        self.prune_edges(evidence=evidence)
+
+        ordered_variables = self.get_ordered_variables(order)
+        for var in M:
+            ordered_variables.append(ordered_variables.pop(ordered_variables.index(var)))
+
+        S = {k: self.get_compatible_instantiations_table(evidence, v) for k, v in self.get_all_cpts().items()}
+
+        for var in ordered_variables:
+            if self.verbose > 2:
+                print('processing', var)
+
+            f_k = {k: df for k, df in S.items() if var in df}
+            if self.verbose > 2:
+                [display(df) for k, df in f_k.items()]
+            f = reduce(self.multiply_factors, list(f_k.values()))
+            if self.verbose > 2:
+                print('f')
+                display(f)
+            if var in M:
+                cols = [c for c in f.columns if c not in ['p', var]]
+                if not cols:
+                    continue
+                f_i = f.sort_values('p', ascending=False).drop_duplicates(cols)#self.sum_out(f, set([var]))
+            else:
+                f_i = self.sum_out(f, set([var]))
+            if self.verbose > 2:
+                print('f_i')
+                display(f_i)
+            for k in f_k:
+                del S[k]
+            S[var + '*'] = f_i
+            if self.verbose > 2:
+                print('S\n', S)
 
         result = reduce(self.multiply_factors, list(S.values()))
         result['p'] = self.normalize_col(result['p'])
@@ -482,7 +531,7 @@ class BayesNet:
         :param cpt: conditional probability table of the variable.
         """
         if variable in self.structure.nodes:
-            raise Exception('Variable already exists.')
+            raise Exception(f'Variable {variable} already exists.')
         else:
             self.structure.add_node(variable, cpt=cpt)
 
@@ -500,7 +549,7 @@ class BayesNet:
         # check for cycles
         if not nx.is_directed_acyclic_graph(self.structure):
             self.structure.remove_edge(edge[0], edge[1])
-            raise ValueError('Edge would make graph cyclic.')
+            raise ValueError(f'Edge {edge[0], edge[1]} would make graph cyclic.')
 
     def del_var(self, variable: str) -> None:
         """
